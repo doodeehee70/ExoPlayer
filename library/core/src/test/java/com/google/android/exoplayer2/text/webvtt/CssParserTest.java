@@ -21,7 +21,6 @@ import static com.google.common.truth.Truth.assertThat;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.android.exoplayer2.util.ParsableByteArray;
 import com.google.android.exoplayer2.util.Util;
-import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -88,32 +87,21 @@ public final class CssParserTest {
 
   @Test
   public void testParseMethodSimpleInput() {
-    WebvttCssStyle expectedStyle = new WebvttCssStyle();
     String styleBlock1 = " ::cue { color : black; background-color: PapayaWhip }";
+    WebvttCssStyle expectedStyle = new WebvttCssStyle();
     expectedStyle.setFontColor(0xFF000000);
     expectedStyle.setBackgroundColor(0xFFFFEFD5);
-    assertParserProduces(styleBlock1, expectedStyle);
+    assertParserProduces(expectedStyle, styleBlock1);
 
     String styleBlock2 = " ::cue { color : black }\n\n::cue { color : invalid }";
     expectedStyle = new WebvttCssStyle();
     expectedStyle.setFontColor(0xFF000000);
-    assertParserProduces(styleBlock2, expectedStyle);
+    assertParserProduces(expectedStyle, styleBlock2);
 
-    String styleBlock3 = "::cue {\n background-color\n:#00fFFe}";
+    String styleBlock3 = " \n::cue {\n background-color\n:#00fFFe}";
     expectedStyle = new WebvttCssStyle();
     expectedStyle.setBackgroundColor(0xFF00FFFE);
-    assertParserProduces(styleBlock3, expectedStyle);
-  }
-
-  @Test
-  public void testParseMethodMultipleRulesInBlockInput() {
-    String styleBlock =
-        "::cue {\n background-color\n:#00fFFe}      \n::cue {\n background-color\n:#00000000}\n";
-    WebvttCssStyle expectedStyle = new WebvttCssStyle();
-    expectedStyle.setBackgroundColor(0xFF00FFFE);
-    WebvttCssStyle secondExpectedStyle = new WebvttCssStyle();
-    secondExpectedStyle.setBackgroundColor(0x000000);
-    assertParserProduces(styleBlock, expectedStyle, secondExpectedStyle);
+    assertParserProduces(expectedStyle, styleBlock3);
   }
 
   @Test
@@ -128,7 +116,7 @@ public final class CssParserTest {
     expectedStyle.setFontFamily("courier");
     expectedStyle.setBold(true);
 
-    assertParserProduces(styleBlock, expectedStyle);
+    assertParserProduces(expectedStyle, styleBlock);
   }
 
   @Test
@@ -140,7 +128,7 @@ public final class CssParserTest {
     expectedStyle.setBackgroundColor(0x190A0B0C);
     expectedStyle.setFontColor(0xFF010101);
 
-    assertParserProduces(styleBlock, expectedStyle);
+    assertParserProduces(expectedStyle, styleBlock);
   }
 
   @Test
@@ -215,29 +203,25 @@ public final class CssParserTest {
     assertThat(input.readLine()).isEqualTo(expectedLine);
   }
 
-  private void assertParserProduces(String styleBlock, WebvttCssStyle... expectedStyles) {
+  private void assertParserProduces(WebvttCssStyle expected,
+      String styleBlock){
     ParsableByteArray input = new ParsableByteArray(Util.getUtf8Bytes(styleBlock));
-    List<WebvttCssStyle> styles = parser.parseBlock(input);
-    assertThat(styles.size()).isEqualTo(expectedStyles.length);
-    for (int i = 0; i < expectedStyles.length; i++) {
-      WebvttCssStyle expected = expectedStyles[i];
-      WebvttCssStyle actualElem = styles.get(i);
-      assertThat(actualElem.hasBackgroundColor()).isEqualTo(expected.hasBackgroundColor());
-      if (expected.hasBackgroundColor()) {
-        assertThat(actualElem.getBackgroundColor()).isEqualTo(expected.getBackgroundColor());
-      }
-      assertThat(actualElem.hasFontColor()).isEqualTo(expected.hasFontColor());
-      if (expected.hasFontColor()) {
-        assertThat(actualElem.getFontColor()).isEqualTo(expected.getFontColor());
-      }
-      assertThat(actualElem.getFontFamily()).isEqualTo(expected.getFontFamily());
-      assertThat(actualElem.getFontSize()).isEqualTo(expected.getFontSize());
-      assertThat(actualElem.getFontSizeUnit()).isEqualTo(expected.getFontSizeUnit());
-      assertThat(actualElem.getStyle()).isEqualTo(expected.getStyle());
-      assertThat(actualElem.isLinethrough()).isEqualTo(expected.isLinethrough());
-      assertThat(actualElem.isUnderline()).isEqualTo(expected.isUnderline());
-      assertThat(actualElem.getTextAlign()).isEqualTo(expected.getTextAlign());
+    WebvttCssStyle actualElem = parser.parseBlock(input);
+    assertThat(actualElem.hasBackgroundColor()).isEqualTo(expected.hasBackgroundColor());
+    if (expected.hasBackgroundColor()) {
+      assertThat(actualElem.getBackgroundColor()).isEqualTo(expected.getBackgroundColor());
     }
+    assertThat(actualElem.hasFontColor()).isEqualTo(expected.hasFontColor());
+    if (expected.hasFontColor()) {
+      assertThat(actualElem.getFontColor()).isEqualTo(expected.getFontColor());
+    }
+    assertThat(actualElem.getFontFamily()).isEqualTo(expected.getFontFamily());
+    assertThat(actualElem.getFontSize()).isEqualTo(expected.getFontSize());
+    assertThat(actualElem.getFontSizeUnit()).isEqualTo(expected.getFontSizeUnit());
+    assertThat(actualElem.getStyle()).isEqualTo(expected.getStyle());
+    assertThat(actualElem.isLinethrough()).isEqualTo(expected.isLinethrough());
+    assertThat(actualElem.isUnderline()).isEqualTo(expected.isUnderline());
+    assertThat(actualElem.getTextAlign()).isEqualTo(expected.getTextAlign());
   }
 
 }

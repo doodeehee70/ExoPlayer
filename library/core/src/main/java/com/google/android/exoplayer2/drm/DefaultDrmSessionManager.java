@@ -544,7 +544,7 @@ public class DefaultDrmSessionManager<T extends ExoMediaCrypto> implements DrmSe
     @Override
     public void onEvent(
         ExoMediaDrm<? extends T> md,
-        @Nullable byte[] sessionId,
+        byte[] sessionId,
         int event,
         int extra,
         @Nullable byte[] data) {

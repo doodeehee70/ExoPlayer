@@ -44,7 +44,6 @@ import com.google.android.exoplayer2.offline.DownloaderConstructorHelper;
 import com.google.android.exoplayer2.offline.DownloaderFactory;
 import com.google.android.exoplayer2.offline.StreamKey;
 import com.google.android.exoplayer2.source.hls.playlist.HlsMasterPlaylist;
-import com.google.android.exoplayer2.testutil.CacheAsserts.RequestSet;
 import com.google.android.exoplayer2.testutil.FakeDataSet;
 import com.google.android.exoplayer2.testutil.FakeDataSource.Factory;
 import com.google.android.exoplayer2.upstream.DummyDataSource;
@@ -130,13 +129,12 @@ public class HlsDownloaderTest {
 
     assertCachedData(
         cache,
-        new RequestSet(fakeDataSet)
-            .subset(
-                MASTER_PLAYLIST_URI,
-                MEDIA_PLAYLIST_1_URI,
-                MEDIA_PLAYLIST_1_DIR + "fileSequence0.ts",
-                MEDIA_PLAYLIST_1_DIR + "fileSequence1.ts",
-                MEDIA_PLAYLIST_1_DIR + "fileSequence2.ts"));
+        fakeDataSet,
+        MASTER_PLAYLIST_URI,
+        MEDIA_PLAYLIST_1_URI,
+        MEDIA_PLAYLIST_1_DIR + "fileSequence0.ts",
+        MEDIA_PLAYLIST_1_DIR + "fileSequence1.ts",
+        MEDIA_PLAYLIST_1_DIR + "fileSequence2.ts");
   }
 
   @Test
@@ -188,12 +186,11 @@ public class HlsDownloaderTest {
 
     assertCachedData(
         cache,
-        new RequestSet(fakeDataSet)
-            .subset(
-                MEDIA_PLAYLIST_1_URI,
-                MEDIA_PLAYLIST_1_DIR + "fileSequence0.ts",
-                MEDIA_PLAYLIST_1_DIR + "fileSequence1.ts",
-                MEDIA_PLAYLIST_1_DIR + "fileSequence2.ts"));
+        fakeDataSet,
+        MEDIA_PLAYLIST_1_URI,
+        MEDIA_PLAYLIST_1_DIR + "fileSequence0.ts",
+        MEDIA_PLAYLIST_1_DIR + "fileSequence1.ts",
+        MEDIA_PLAYLIST_1_DIR + "fileSequence2.ts");
   }
 
   @Test

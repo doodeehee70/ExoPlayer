@@ -29,7 +29,6 @@ VP9_EXT_PATH="${EXOPLAYER_ROOT}/extensions/vp9/src/main"
 ```
 
 * Download the [Android NDK][] and set its location in an environment variable.
-  The build configuration has been tested with Android NDK r19c.
 
 ```
 NDK_PATH="<path to Android NDK>"
@@ -55,7 +54,7 @@ git checkout tags/v1.8.0 -b v1.8.0
 
 ```
 cd ${VP9_EXT_PATH}/jni && \
-./generate_libvpx_android_configs.sh
+./generate_libvpx_android_configs.sh "${NDK_PATH}"
 ```
 
 * Build the JNI native libraries from the command line:
@@ -67,6 +66,7 @@ ${NDK_PATH}/ndk-build APP_ABI=all -j4
 
 [top level README]: https://github.com/google/ExoPlayer/blob/release-v2/README.md
 [Android NDK]: https://developer.android.com/tools/sdk/ndk/index.html
+[#3520]: https://github.com/google/ExoPlayer/issues/3520
 
 ## Notes ##
 

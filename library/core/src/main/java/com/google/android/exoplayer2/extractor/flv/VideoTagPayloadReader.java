@@ -47,7 +47,6 @@ import com.google.android.exoplayer2.video.AvcConfig;
 
   // State variables.
   private boolean hasOutputFormat;
-  private boolean hasOutputKeyframe;
   private int frameType;
 
   /**
@@ -61,7 +60,7 @@ import com.google.android.exoplayer2.video.AvcConfig;
 
   @Override
   public void seek() {
-    hasOutputKeyframe = false;
+    // Do nothing.
   }
 
   @Override
@@ -78,7 +77,7 @@ import com.google.android.exoplayer2.video.AvcConfig;
   }
 
   @Override
-  protected boolean parsePayload(ParsableByteArray data, long timeUs) throws ParserException {
+  protected void parsePayload(ParsableByteArray data, long timeUs) throws ParserException {
     int packetType = data.readUnsignedByte();
     int compositionTimeMs = data.readInt24();
 
@@ -95,12 +94,7 @@ import com.google.android.exoplayer2.video.AvcConfig;
           avcConfig.initializationData, Format.NO_VALUE, avcConfig.pixelWidthAspectRatio, null);
       output.format(format);
       hasOutputFormat = true;
-      return false;
     } else if (packetType == AVC_PACKET_TYPE_AVC_NALU && hasOutputFormat) {
-      boolean isKeyframe = frameType == VIDEO_FRAME_KEYFRAME;
-      if (!hasOutputKeyframe && !isKeyframe) {
-        return false;
-      }
       // TODO: Deduplicate with Mp4Extractor.
       // Zero the top three bytes of the array that we'll use to decode nal unit lengths, in case
       // they're only 1 or 2 bytes long.
@@ -129,12 +123,8 @@ import com.google.android.exoplayer2.video.AvcConfig;
         output.sampleData(data, bytesToWrite);
         bytesWritten += bytesToWrite;
       }
-      output.sampleMetadata(
-          timeUs, isKeyframe ? C.BUFFER_FLAG_KEY_FRAME : 0, bytesWritten, 0, null);
-      hasOutputKeyframe = true;
-      return true;
-    } else {
-      return false;
+      output.sampleMetadata(timeUs, frameType == VIDEO_FRAME_KEYFRAME ? C.BUFFER_FLAG_KEY_FRAME : 0,
+          bytesWritten, 0, null);
     }
   }
 

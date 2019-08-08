@@ -1713,12 +1713,7 @@ public final class Util {
     if (connectivityManager == null) {
       return C.NETWORK_TYPE_UNKNOWN;
     }
-    try {
-      networkInfo = connectivityManager.getActiveNetworkInfo();
-    } catch (SecurityException e) {
-      // Expected if permission was revoked.
-      return C.NETWORK_TYPE_UNKNOWN;
-    }
+    networkInfo = connectivityManager.getActiveNetworkInfo();
     if (networkInfo == null || !networkInfo.isConnected()) {
       return C.NETWORK_TYPE_OFFLINE;
     }

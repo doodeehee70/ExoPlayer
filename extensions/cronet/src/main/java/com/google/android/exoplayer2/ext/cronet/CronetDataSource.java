@@ -113,7 +113,7 @@ public class CronetDataSource extends BaseDataSource implements HttpDataSource {
 
   private final CronetEngine cronetEngine;
   private final Executor executor;
-  @Nullable private final Predicate<String> contentTypePredicate;
+  private final Predicate<String> contentTypePredicate;
   private final int connectTimeoutMs;
   private final int readTimeoutMs;
   private final boolean resetTimeoutOnRedirects;
@@ -153,26 +153,12 @@ public class CronetDataSource extends BaseDataSource implements HttpDataSource {
    *     hop from Cronet's internal network thread to the response handling thread. However, to
    *     avoid slowing down overall network performance, care must be taken to make sure response
    *     handling is a fast operation when using a direct executor.
-   */
-  public CronetDataSource(CronetEngine cronetEngine, Executor executor) {
-    this(cronetEngine, executor, /* contentTypePredicate= */ null);
-  }
-
-  /**
-   * @param cronetEngine A CronetEngine.
-   * @param executor The {@link java.util.concurrent.Executor} that will handle responses. This may
-   *     be a direct executor (i.e. executes tasks on the calling thread) in order to avoid a thread
-   *     hop from Cronet's internal network thread to the response handling thread. However, to
-   *     avoid slowing down overall network performance, care must be taken to make sure response
-   *     handling is a fast operation when using a direct executor.
    * @param contentTypePredicate An optional {@link Predicate}. If a content type is rejected by the
    *     predicate then an {@link InvalidContentTypeException} is thrown from {@link
    *     #open(DataSpec)}.
    */
   public CronetDataSource(
-      CronetEngine cronetEngine,
-      Executor executor,
-      @Nullable Predicate<String> contentTypePredicate) {
+      CronetEngine cronetEngine, Executor executor, Predicate<String> contentTypePredicate) {
     this(
         cronetEngine,
         executor,
@@ -202,7 +188,7 @@ public class CronetDataSource extends BaseDataSource implements HttpDataSource {
   public CronetDataSource(
       CronetEngine cronetEngine,
       Executor executor,
-      @Nullable Predicate<String> contentTypePredicate,
+      Predicate<String> contentTypePredicate,
       int connectTimeoutMs,
       int readTimeoutMs,
       boolean resetTimeoutOnRedirects,
@@ -239,7 +225,7 @@ public class CronetDataSource extends BaseDataSource implements HttpDataSource {
   public CronetDataSource(
       CronetEngine cronetEngine,
       Executor executor,
-      @Nullable Predicate<String> contentTypePredicate,
+      Predicate<String> contentTypePredicate,
       int connectTimeoutMs,
       int readTimeoutMs,
       boolean resetTimeoutOnRedirects,
@@ -260,7 +246,7 @@ public class CronetDataSource extends BaseDataSource implements HttpDataSource {
   /* package */ CronetDataSource(
       CronetEngine cronetEngine,
       Executor executor,
-      @Nullable Predicate<String> contentTypePredicate,
+      Predicate<String> contentTypePredicate,
       int connectTimeoutMs,
       int readTimeoutMs,
       boolean resetTimeoutOnRedirects,

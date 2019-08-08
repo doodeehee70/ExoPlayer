@@ -28,7 +28,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
 import androidx.annotation.RequiresApi;
-import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.Util;
 
 /**
@@ -127,8 +126,7 @@ public final class RequirementsWatcher {
   @TargetApi(23)
   private void registerNetworkCallbackV23() {
     ConnectivityManager connectivityManager =
-        Assertions.checkNotNull(
-            (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE));
+        (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkRequest request =
         new NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
