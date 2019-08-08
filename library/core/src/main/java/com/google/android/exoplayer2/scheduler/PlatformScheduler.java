@@ -25,7 +25,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.PersistableBundle;
 import androidx.annotation.RequiresPermission;
-import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.Log;
 import com.google.android.exoplayer2.util.Util;
 
@@ -37,7 +36,7 @@ import com.google.android.exoplayer2.util.Util;
  * <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
  * <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
  *
- * <service android:name="com.google.android.exoplayer2.scheduler.PlatformScheduler$PlatformSchedulerService"
+ * <service android:name="com.google.android.exoplayer2.util.scheduler.PlatformScheduler$PlatformSchedulerService"
  *     android:permission="android.permission.BIND_JOB_SERVICE"
  *     android:exported="true"/>
  * }</pre>
@@ -130,8 +129,9 @@ public final class PlatformScheduler implements Scheduler {
         logd("Requirements are met");
         String serviceAction = extras.getString(KEY_SERVICE_ACTION);
         String servicePackage = extras.getString(KEY_SERVICE_PACKAGE);
-        Intent intent =
-            new Intent(Assertions.checkNotNull(serviceAction)).setPackage(servicePackage);
+        // FIXME: incompatible types in argument.
+        @SuppressWarnings("nullness:argument.type.incompatible")
+        Intent intent = new Intent(serviceAction).setPackage(servicePackage);
         logd("Starting service action: " + serviceAction + " package: " + servicePackage);
         Util.startForegroundService(this, intent);
       } else {

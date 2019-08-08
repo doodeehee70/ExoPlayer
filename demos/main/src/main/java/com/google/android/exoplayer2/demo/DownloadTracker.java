@@ -30,12 +30,15 @@ import com.google.android.exoplayer2.offline.DownloadIndex;
 import com.google.android.exoplayer2.offline.DownloadManager;
 import com.google.android.exoplayer2.offline.DownloadRequest;
 import com.google.android.exoplayer2.offline.DownloadService;
+import com.google.android.exoplayer2.offline.StreamKey;
 import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedTrackInfo;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.util.Log;
 import com.google.android.exoplayer2.util.Util;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /** Tracks media that has been downloaded. */
@@ -83,9 +86,11 @@ public class DownloadTracker {
   }
 
   @SuppressWarnings("unchecked")
-  public DownloadRequest getDownloadRequest(Uri uri) {
+  public List<StreamKey> getOfflineStreamKeys(Uri uri) {
     Download download = downloads.get(uri);
-    return download != null && download.state != Download.STATE_FAILED ? download.request : null;
+    return download != null && download.state != Download.STATE_FAILED
+        ? download.request.streamKeys
+        : Collections.emptyList();
   }
 
   public void toggleDownload(

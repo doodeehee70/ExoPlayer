@@ -729,20 +729,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
       newPlayingPeriodHolder = queue.advancePlayingPeriod();
     }
 
-    // Disable all renderers if the period being played is changing, if the seek results in negative
-    // renderer timestamps, or if forced.
-    if (forceDisableRenderers
-        || oldPlayingPeriodHolder != newPlayingPeriodHolder
-        || (newPlayingPeriodHolder != null
-            && newPlayingPeriodHolder.toRendererTime(periodPositionUs) < 0)) {
+    // Disable all the renderers if the period being played is changing, or if forced.
+    if (oldPlayingPeriodHolder != newPlayingPeriodHolder || forceDisableRenderers) {
       for (Renderer renderer : enabledRenderers) {
         disableRenderer(renderer);
       }
       enabledRenderers = new Renderer[0];
       oldPlayingPeriodHolder = null;
-      if (newPlayingPeriodHolder != null) {
-        newPlayingPeriodHolder.setRendererOffset(/* rendererPositionOffsetUs= */ 0);
-      }
     }
 
     // Update the holders.
@@ -1060,14 +1053,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
         && nextInfo.resolvedPeriodIndex == currentPeriodIndex
         && nextInfo.resolvedPeriodTimeUs > oldPeriodPositionUs
         && nextInfo.resolvedPeriodTimeUs <= newPeriodPositionUs) {
-      try {
-        sendMessageToTarget(nextInfo.message);
-      } finally {
-        if (nextInfo.message.getDeleteAfterDelivery() || nextInfo.message.isCanceled()) {
-          pendingMessages.remove(nextPendingMessageIndex);
-        } else {
-          nextPendingMessageIndex++;
-        }
+      sendMessageToTarget(nextInfo.message);
+      if (nextInfo.message.getDeleteAfterDelivery() || nextInfo.message.isCanceled()) {
+        pendingMessages.remove(nextPendingMessageIndex);
+      } else {
+        nextPendingMessageIndex++;
       }
       nextInfo =
           nextPendingMessageIndex < pendingMessages.size()
@@ -1805,12 +1795,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
   private long getTotalBufferedDurationUs(long bufferedPositionInLoadingPeriodUs) {
     MediaPeriodHolder loadingPeriodHolder = queue.getLoadingPeriod();
-    if (loadingPeriodHolder == null) {
-      return 0;
-    }
-    long totalBufferedDurationUs =
-        bufferedPositionInLoadingPeriodUs - loadingPeriodHolder.toPeriodTime(rendererPositionUs);
-    return Math.max(0, totalBufferedDurationUs);
+    return loadingPeriodHolder == null
+        ? 0
+        : bufferedPositionInLoadingPeriodUs - loadingPeriodHolder.toPeriodTime(rendererPositionUs);
   }
 
   private void updateLoadControlTrackSelection(

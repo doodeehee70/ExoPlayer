@@ -35,7 +35,6 @@ import com.google.android.exoplayer2.offline.Downloader;
 import com.google.android.exoplayer2.offline.DownloaderConstructorHelper;
 import com.google.android.exoplayer2.offline.DownloaderFactory;
 import com.google.android.exoplayer2.offline.StreamKey;
-import com.google.android.exoplayer2.testutil.CacheAsserts.RequestSet;
 import com.google.android.exoplayer2.testutil.FakeDataSet;
 import com.google.android.exoplayer2.testutil.FakeDataSource;
 import com.google.android.exoplayer2.testutil.FakeDataSource.Factory;
@@ -109,7 +108,7 @@ public class DashDownloaderTest {
 
     DashDownloader dashDownloader = getDashDownloader(fakeDataSet, new StreamKey(0, 0, 0));
     dashDownloader.download(progressListener);
-    assertCachedData(cache, new RequestSet(fakeDataSet).useBoundedDataSpecFor("audio_init_data"));
+    assertCachedData(cache, fakeDataSet);
   }
 
   @Test
@@ -128,7 +127,7 @@ public class DashDownloaderTest {
 
     DashDownloader dashDownloader = getDashDownloader(fakeDataSet, new StreamKey(0, 0, 0));
     dashDownloader.download(progressListener);
-    assertCachedData(cache, new RequestSet(fakeDataSet).useBoundedDataSpecFor("audio_init_data"));
+    assertCachedData(cache, fakeDataSet);
   }
 
   @Test
@@ -147,7 +146,7 @@ public class DashDownloaderTest {
     DashDownloader dashDownloader =
         getDashDownloader(fakeDataSet, new StreamKey(0, 0, 0), new StreamKey(0, 1, 0));
     dashDownloader.download(progressListener);
-    assertCachedData(cache, new RequestSet(fakeDataSet).useBoundedDataSpecFor("audio_init_data"));
+    assertCachedData(cache, fakeDataSet);
   }
 
   @Test
@@ -168,7 +167,7 @@ public class DashDownloaderTest {
 
     DashDownloader dashDownloader = getDashDownloader(fakeDataSet);
     dashDownloader.download(progressListener);
-    assertCachedData(cache, new RequestSet(fakeDataSet).useBoundedDataSpecFor("audio_init_data"));
+    assertCachedData(cache, fakeDataSet);
   }
 
   @Test
@@ -257,7 +256,7 @@ public class DashDownloaderTest {
       // Expected.
     }
     dashDownloader.download(progressListener);
-    assertCachedData(cache, new RequestSet(fakeDataSet).useBoundedDataSpecFor("audio_init_data"));
+    assertCachedData(cache, fakeDataSet);
   }
 
   @Test

@@ -45,8 +45,7 @@ import com.google.android.exoplayer2.drm.HttpMediaDrmCallback;
 import com.google.android.exoplayer2.drm.UnsupportedDrmException;
 import com.google.android.exoplayer2.mediacodec.MediaCodecRenderer.DecoderInitializationException;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil.DecoderQueryException;
-import com.google.android.exoplayer2.offline.DownloadHelper;
-import com.google.android.exoplayer2.offline.DownloadRequest;
+import com.google.android.exoplayer2.offline.StreamKey;
 import com.google.android.exoplayer2.source.BehindLiveWindowException;
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
@@ -76,6 +75,7 @@ import java.lang.reflect.Constructor;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
+import java.util.List;
 import java.util.UUID;
 
 /** An activity that plays media using {@link SimpleExoPlayer}. */
@@ -457,24 +457,31 @@ public class PlayerActivity extends AppCompatActivity
   }
 
   private MediaSource buildMediaSource(Uri uri, @Nullable String overrideExtension) {
-    DownloadRequest downloadRequest =
-        ((DemoApplication) getApplication()).getDownloadTracker().getDownloadRequest(uri);
-    if (downloadRequest != null) {
-      return DownloadHelper.createMediaSource(downloadRequest, dataSourceFactory);
-    }
     @ContentType int type = Util.inferContentType(uri, overrideExtension);
+    List<StreamKey> offlineStreamKeys = getOfflineStreamKeys(uri);
     switch (type) {
       case C.TYPE_DASH:
-        return new DashMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
+        return new DashMediaSource.Factory(dataSourceFactory)
+            .setStreamKeys(offlineStreamKeys)
+            .createMediaSource(uri);
       case C.TYPE_SS:
-        return new SsMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
+        return new SsMediaSource.Factory(dataSourceFactory)
+            .setStreamKeys(offlineStreamKeys)
+            .createMediaSource(uri);
       case C.TYPE_HLS:
-        return new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
+        return new HlsMediaSource.Factory(dataSourceFactory)
+            .setStreamKeys(offlineStreamKeys)
+            .createMediaSource(uri);
       case C.TYPE_OTHER:
         return new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
-      default:
+      default: {
         throw new IllegalStateException("Unsupported type: " + type);
+      }
     }
+  }
+
+  private List<StreamKey> getOfflineStreamKeys(Uri uri) {
+    return ((DemoApplication) getApplication()).getDownloadTracker().getOfflineStreamKeys(uri);
   }
 
   private DefaultDrmSessionManager<FrameworkMediaCrypto> buildDrmSessionManagerV18(

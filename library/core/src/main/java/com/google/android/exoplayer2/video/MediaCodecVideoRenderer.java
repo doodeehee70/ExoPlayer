@@ -550,7 +550,8 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer {
       MediaCodec codec,
       Format format,
       MediaCrypto crypto,
-      float codecOperatingRate) {
+      float codecOperatingRate)
+      throws DecoderQueryException {
     codecMaxValues = getCodecMaxValues(codecInfo, format, getStreamFormats());
     MediaFormat mediaFormat =
         getMediaFormat(
@@ -679,8 +680,7 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer {
       int bufferIndex,
       int bufferFlags,
       long bufferPresentationTimeUs,
-      boolean isDecodeOnlyBuffer,
-      boolean isLastBuffer,
+      boolean shouldSkip,
       Format format)
       throws ExoPlaybackException {
     if (initialPositionUs == C.TIME_UNSET) {
@@ -689,7 +689,7 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer {
 
     long presentationTimeUs = bufferPresentationTimeUs - outputStreamOffsetUs;
 
-    if (isDecodeOnlyBuffer && !isLastBuffer) {
+    if (shouldSkip) {
       skipOutputBuffer(codec, bufferIndex, presentationTimeUs);
       return true;
     }
@@ -737,10 +737,10 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer {
         bufferPresentationTimeUs, unadjustedFrameReleaseTimeNs);
     earlyUs = (adjustedReleaseTimeNs - systemTimeNs) / 1000;
 
-    if (shouldDropBuffersToKeyframe(earlyUs, elapsedRealtimeUs, isLastBuffer)
+    if (shouldDropBuffersToKeyframe(earlyUs, elapsedRealtimeUs)
         && maybeDropBuffersToKeyframe(codec, bufferIndex, presentationTimeUs, positionUs)) {
       return false;
-    } else if (shouldDropOutputBuffer(earlyUs, elapsedRealtimeUs, isLastBuffer)) {
+    } else if (shouldDropOutputBuffer(earlyUs, elapsedRealtimeUs)) {
       dropOutputBuffer(codec, bufferIndex, presentationTimeUs);
       return true;
     }
@@ -808,8 +808,8 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer {
 
   /**
    * Returns the offset that should be subtracted from {@code bufferPresentationTimeUs} in {@link
-   * #processOutputBuffer(long, long, MediaCodec, ByteBuffer, int, int, long, boolean, boolean,
-   * Format)} to get the playback position with respect to the media.
+   * #processOutputBuffer(long, long, MediaCodec, ByteBuffer, int, int, long, boolean, Format)} to
+   * get the playback position with respect to the media.
    */
   protected long getOutputStreamOffsetUs() {
     return outputStreamOffsetUs;
@@ -861,11 +861,9 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer {
    *     indicates that the buffer is late.
    * @param elapsedRealtimeUs {@link android.os.SystemClock#elapsedRealtime()} in microseconds,
    *     measured at the start of the current iteration of the rendering loop.
-   * @param isLastBuffer Whether the buffer is the last buffer in the current stream.
    */
-  protected boolean shouldDropOutputBuffer(
-      long earlyUs, long elapsedRealtimeUs, boolean isLastBuffer) {
-    return isBufferLate(earlyUs) && !isLastBuffer;
+  protected boolean shouldDropOutputBuffer(long earlyUs, long elapsedRealtimeUs) {
+    return isBufferLate(earlyUs);
   }
 
   /**
@@ -876,11 +874,9 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer {
    *     negative value indicates that the buffer is late.
    * @param elapsedRealtimeUs {@link android.os.SystemClock#elapsedRealtime()} in microseconds,
    *     measured at the start of the current iteration of the rendering loop.
-   * @param isLastBuffer Whether the buffer is the last buffer in the current stream.
    */
-  protected boolean shouldDropBuffersToKeyframe(
-      long earlyUs, long elapsedRealtimeUs, boolean isLastBuffer) {
-    return isBufferVeryLate(earlyUs) && !isLastBuffer;
+  protected boolean shouldDropBuffersToKeyframe(long earlyUs, long elapsedRealtimeUs) {
+    return isBufferVeryLate(earlyUs);
   }
 
   /**
@@ -1177,9 +1173,11 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer {
    * @param format The format for which the codec is being configured.
    * @param streamFormats The possible stream formats.
    * @return Suitable {@link CodecMaxValues}.
+   * @throws DecoderQueryException If an error occurs querying {@code codecInfo}.
    */
   protected CodecMaxValues getCodecMaxValues(
-      MediaCodecInfo codecInfo, Format format, Format[] streamFormats) {
+      MediaCodecInfo codecInfo, Format format, Format[] streamFormats)
+      throws DecoderQueryException {
     int maxWidth = format.width;
     int maxHeight = format.height;
     int maxInputSize = getMaxInputSize(codecInfo, format);
@@ -1229,15 +1227,17 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer {
   }
 
   /**
-   * Returns a maximum video size to use when configuring a codec for {@code format} in a way that
-   * will allow possible adaptation to other compatible formats that are expected to have the same
-   * aspect ratio, but whose sizes are unknown.
+   * Returns a maximum video size to use when configuring a codec for {@code format} in a way
+   * that will allow possible adaptation to other compatible formats that are expected to have the
+   * same aspect ratio, but whose sizes are unknown.
    *
    * @param codecInfo Information about the {@link MediaCodec} being configured.
    * @param format The format for which the codec is being configured.
    * @return The maximum video size to use, or null if the size of {@code format} should be used.
+   * @throws DecoderQueryException If an error occurs querying {@code codecInfo}.
    */
-  private static Point getCodecMaxSize(MediaCodecInfo codecInfo, Format format) {
+  private static Point getCodecMaxSize(MediaCodecInfo codecInfo, Format format)
+      throws DecoderQueryException {
     boolean isVerticalVideo = format.height > format.width;
     int formatLongEdgePx = isVerticalVideo ? format.height : format.width;
     int formatShortEdgePx = isVerticalVideo ? format.width : format.height;
@@ -1255,18 +1255,12 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer {
           return alignedSize;
         }
       } else {
-        try {
-          // Conservatively assume the codec requires 16px width and height alignment.
-          longEdgePx = Util.ceilDivide(longEdgePx, 16) * 16;
-          shortEdgePx = Util.ceilDivide(shortEdgePx, 16) * 16;
-          if (longEdgePx * shortEdgePx <= MediaCodecUtil.maxH264DecodableFrameSize()) {
-            return new Point(
-                isVerticalVideo ? shortEdgePx : longEdgePx,
-                isVerticalVideo ? longEdgePx : shortEdgePx);
-          }
-        } catch (DecoderQueryException e) {
-          // We tried our best. Give up!
-          return null;
+        // Conservatively assume the codec requires 16px width and height alignment.
+        longEdgePx = Util.ceilDivide(longEdgePx, 16) * 16;
+        shortEdgePx = Util.ceilDivide(shortEdgePx, 16) * 16;
+        if (longEdgePx * shortEdgePx <= MediaCodecUtil.maxH264DecodableFrameSize()) {
+          return new Point(isVerticalVideo ? shortEdgePx : longEdgePx,
+              isVerticalVideo ? longEdgePx : shortEdgePx);
         }
       }
     }

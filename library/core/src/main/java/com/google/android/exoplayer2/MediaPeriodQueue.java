@@ -144,8 +144,8 @@ import com.google.android.exoplayer2.util.Assertions;
       MediaPeriodInfo info) {
     long rendererPositionOffsetUs =
         loading == null
-            ? (info.id.isAd() ? info.contentPositionUs : 0)
-            : (loading.getRendererOffset() + loading.info.durationUs - info.startPositionUs);
+            ? info.startPositionUs
+            : (loading.getRendererOffset() + loading.info.durationUs);
     MediaPeriodHolder newPeriodHolder =
         new MediaPeriodHolder(
             rendererCapabilities,
